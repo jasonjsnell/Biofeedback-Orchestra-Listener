@@ -8,17 +8,28 @@
 import SwiftUI
 
 struct ContentView: View {
+    @StateObject var multipeerSessionManager = MultipeerSessionManager()
+
     var body: some View {
         VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
-        }
-        .padding()
-    }
-}
+            Text("Listener")
+                .font(.largeTitle)
+                .padding()
 
-#Preview {
-    ContentView()
+            Text("Connected Musicians:")
+            List {
+                ForEach(multipeerSessionManager.connectedPeers, id: \.self) { peer in
+                    Text(peer.displayName)
+                }
+            }
+            
+            // Display incoming EEG data here
+            
+            Button("Start Listening") {
+                print("start listening")
+                multipeerSessionManager.startAdvertising()
+            }
+            .padding()
+        }
+    }
 }
