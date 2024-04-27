@@ -1,13 +1,38 @@
+//this is the class where data from Muse devices via the phones / iPads comes into the laptop
+//Muse -> iPhone -> this laptop
+
 import MultipeerConnectivity
+import XvMidi
 
 class MultipeerSessionManager: NSObject, ObservableObject {
+    
     // MARK: - Properties
     private let serviceType = "eeg-network"
     private let myPeerId: MCPeerID
     private var session: MCSession
     private var advertiser: MCNearbyServiceAdvertiser
+    private var midi:XvMidi
     
-    @Published var connectedPeers: [MCPeerID] = []
+    //connected devices
+    @Published var connectedDevices: [ConnectedDevice] = []
+    @Published var midiSlots: [MIDISlot] = Array(
+        repeating: MIDISlot(
+            id: 0,
+            peerID: nil
+        ),
+        count: 10
+    )
+        
+    
+    //processors
+    @Published var bpmProcessor:BpmProcessor = BpmProcessor()
+    
+    //packets per second
+    private var packetCount = 0
+    private var lastPacketTimestamp = Date()
+    private var packetsPerSecond = 0
+    
+    //
        
     // MARK: - Initializer
     override init() {
@@ -15,41 +40,48 @@ class MultipeerSessionManager: NSObject, ObservableObject {
         self.session = MCSession(peer: myPeerId, securityIdentity: nil, encryptionPreference: .required)
         self.advertiser = MCNearbyServiceAdvertiser(peer: myPeerId, discoveryInfo: nil, serviceType: serviceType)
         
+        midi = XvMidi.sharedInstance
+        let midiSuccess:Bool = midi.initMidi(withAppID: "Biofeedback-Orchestra")
+        if (midiSuccess) {
+            print("XvMidi: Init")
+        }
+        
         super.init()
         
+        // Initialize the slots with unique IDs
+        for index in midiSlots.indices {
+            midiSlots[index].id = index + 1
+        }
+        
+        //delegates
+        bpmProcessor.delegate = self
         self.session.delegate = self
         self.advertiser.delegate = self
-    }
-    
-    // MARK: - Methods for Advertising
-    func startAdvertising() {
+        
         advertiser.startAdvertisingPeer()
     }
-
-    func stopAdvertising() {
-        advertiser.stopAdvertisingPeer()
-    }
-
 }
 
-// MARK: - MCSessionDelegate
+// MARK: - Session connection / state changes
 extension MultipeerSessionManager: MCSessionDelegate {
     func session(_ session: MCSession, peer peerID: MCPeerID, didChange state: MCSessionState) {
-        
-        print("session didChange", state)
-        
         DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+
             switch state {
             case .connected:
-                print("Connected: \(peerID.displayName)")
-                self?.connectedPeers.append(peerID)
+                print("MultipeerSessionManager: Connected: \(peerID.displayName)")
+                // Add the connected peer to the list
+                addDevice(peerID: peerID)
+
             case .notConnected:
-                print("Not Connected: \(peerID.displayName)")
-                if let index = self?.connectedPeers.firstIndex(of: peerID) {
-                    self?.connectedPeers.remove(at: index)
-                }
+                print("MultipeerSessionManager: Not Connected: \(peerID.displayName)")
+                // Remove the disconnected peer from the list
+                removeDevice(peerID: peerID)
+
             case .connecting:
-                print("Connecting: \(peerID.displayName)")
+                print("MultipeerSessionManager: Connecting: \(peerID.displayName)")
+
             @unknown default:
                 break
             }
@@ -58,55 +90,149 @@ extension MultipeerSessionManager: MCSessionDelegate {
 
     func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {
         do {
-            if let dataDict = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any], let type = dataDict["type"] as? String {
+            if let dataDict = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
+               let type = dataDict["type"] as? String {
                 
-                DispatchQueue.main.async {
-                    
-                    print("RX: \(type) ")
-                    
-                    switch type {
-                    case "eeg":
-                        
-                        if let brainwaves = dataDict["brainwaves"] as? [Int], let deviceID = dataDict["deviceID"] as? String {
-                            print("Received EEG data from \(deviceID): \(brainwaves)")
-                            // Process EEG data here
+                calculatePacketsPerSecond()
+                
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
+
+                    // Check if the deviceID already exists in the connectedDevices array
+                    if let connectedDevice = self.connectedDevices.first(where: { $0.peerID == peerID }) {
+                        // Process the received data based on its type
+                        self.processData(
+                            type: type,
+                            dataDict: dataDict,
+                            connectedDevice: connectedDevice
+                        )
+                    } else {
+                        // Device doesn't exist, so handle the new device
+                        // This will occur for a "hello" message or as a fallback for "eeg" and "heart" messages
+                        self.addDevice(peerID: peerID)
+                        // If this was not a "hello" message, process the data immediately
+                        if let connectedDevice = self.connectedDevices.last {
+                            self.processData(
+                                type: type,
+                                dataDict: dataDict,
+                                connectedDevice: connectedDevice
+                            )
                         }
-                    case "heart":
-                        if let bpm = dataDict["bpm"] as? Int, let hrv = dataDict["hrv"] as? Int, let deviceID = dataDict["deviceID"] as? String {
-                            print("Received Heart data from \(deviceID): BPM: \(bpm), HRV: \(hrv)")
-                            // Process Heart Rate data here
-                        }
-                    default:
-                        print("Unknown data type received")
                     }
                 }
-                
-            
-                    
-                
             }
         } catch {
             print("Error decoding data: \(error.localizedDescription)")
         }
     }
+    
+    private func addDevice(peerID: MCPeerID) {
+        let newDevice = ConnectedDevice(peerID: peerID, position: findAvailableSlot())
+        
+        if let slotIndex = midiSlots.firstIndex(where: { $0.id == newDevice.position }) {
+            DispatchQueue.main.async {
+                self.midiSlots[slotIndex].peerID = peerID
+            }
+        }
+        newDevice.delegate = self
+        connectedDevices.append(newDevice)
+    }
+    
+    private func removeDevice(peerID: MCPeerID) {
+        // Remove the device from the connected devices array
+        if let deviceIndex = connectedDevices.firstIndex(where: { $0.peerID == peerID }) {
+            connectedDevices.remove(at: deviceIndex)
+        }
 
+        // Find the corresponding slot and nil out the peerID
+        if let slotIndex = midiSlots.firstIndex(where: { $0.peerID == peerID }) {
+            DispatchQueue.main.async {
+                self.midiSlots[slotIndex].peerID = nil
+            }
+        }
+    }
+    
+
+    func findAvailableSlot() -> Int {
+        // Find the next available slot or return a default value
+        midiSlots.first(where: { $0.peerID == nil })?.id ?? 1
+    }
+    
+    private func processData(type: String, dataDict: [String: Any], connectedDevice: ConnectedDevice) {
+        // This function is used to process "eeg" and "heart" messages for an existing connected device
+        switch type {
+        case "eeg":
+            if let brainwaves = dataDict["brainwaves"] as? [Int] {
+                // Process EEG data for the specific ConnectedDevice object
+                connectedDevice.process(brainwaves: brainwaves)
+            }
+        case "heart":
+            if let bpm = dataDict["bpm"] as? Int, let hrv = dataDict["hrv"] as? Int {
+                // Pass bpm to processor to detect group average
+                bpmProcessor.add(bpm: bpm)
+            }
+        default:
+            print("Data type \(type) received for device \(connectedDevice.peerID)")
+        }
+    }
+    
+    private func calculatePacketsPerSecond(){
+        // Increment the packet count
+        packetCount += 1
+        
+        // Calculate the packets per second
+        let currentTimestamp = Date()
+        let elapsedTime = currentTimestamp.timeIntervalSince(lastPacketTimestamp)
+        
+        if elapsedTime >= 1.0 {
+            // Update the packetsPerSecond variable
+            packetsPerSecond = Int(Double(packetCount) / elapsedTime)
+            
+            // Reset the packet count and last timestamp
+            packetCount = 0
+            lastPacketTimestamp = currentTimestamp
+            
+            print("Packets per second: \(packetsPerSecond)")
+        }
+    }
+
+    //MARK: Unused session funcs
     func session(_ session: MCSession, didReceive stream: InputStream, withName streamName: String, fromPeer peerID: MCPeerID) {
-        // Streams are not used in this example
     }
 
     func session(_ session: MCSession, didStartReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, with progress: Progress) {
-        // Resource transfer not used in this example
     }
 
     func session(_ session: MCSession, didFinishReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, at localURL: URL?, withError error: Error?) {
-        // Resource transfer not used in this example
     }
 }
 
-// MARK: - MCNearbyServiceAdvertiserDelegate
+//MARK: - Send to MIDI
+
+extension MultipeerSessionManager: BpmProcessorDelegate {
+    func didDetect(newBpm: Int) {
+        // Handle new BPM detected. For example, send it via MIDI.
+        print("send new BPM to MIDI")
+        //midi.sendBpm(newBpm)
+    }
+}
+
+extension MultipeerSessionManager: ConnectedDeviceDelegate {
+    func didDetect(newAlphaNote: Int, forDevice deviceID: String) {
+        // Handle new alpha note detected. For example, send it via MIDI.
+        print("send new alpha note to MIDI")
+        //midi.sendAlphaNote(newAlphaNote, forDevice: deviceID)
+    }
+}
+
+// MARK: - Accept auto invitations
 extension MultipeerSessionManager: MCNearbyServiceAdvertiserDelegate {
     func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: Data?, invitationHandler: @escaping (Bool, MCSession?) -> Void) {
         // Auto-accept invitations
         invitationHandler(true, session)
     }
 }
+
+
+
+

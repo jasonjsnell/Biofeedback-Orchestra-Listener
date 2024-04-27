@@ -7,17 +7,46 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		BB1B36922BDD990200A72880 /* MidiSlots.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1B36912BDD990200A72880 /* MidiSlots.swift */; };
 		BB31AB462BD9B47F004F7913 /* Biofeedback_Orchestra_ListenerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB31AB452BD9B47F004F7913 /* Biofeedback_Orchestra_ListenerApp.swift */; };
 		BB31AB482BD9B47F004F7913 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB31AB472BD9B47F004F7913 /* ContentView.swift */; };
 		BB31AB4A2BD9B481004F7913 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BB31AB492BD9B481004F7913 /* Assets.xcassets */; };
 		BB31AB4D2BD9B481004F7913 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BB31AB4C2BD9B481004F7913 /* Preview Assets.xcassets */; };
 		BB31AB542BD9B671004F7913 /* MultipeerSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB31AB532BD9B671004F7913 /* MultipeerSessionManager.swift */; };
 		BB31AB562BD9B8DC004F7913 /* EEGDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB31AB552BD9B8DC004F7913 /* EEGDataManager.swift */; };
-		BB31AB582BD9B909004F7913 /* MusicianPeer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB31AB572BD9B909004F7913 /* MusicianPeer.swift */; };
+		BB31AB582BD9B909004F7913 /* ConnectedDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB31AB572BD9B909004F7913 /* ConnectedDevice.swift */; };
 		BB31AB5A2BD9B928004F7913 /* EEGDataView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB31AB592BD9B928004F7913 /* EEGDataView.swift */; };
+		BB31AB5F2BDAB424004F7913 /* BpmProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB31AB5E2BDAB424004F7913 /* BpmProcessor.swift */; };
+		BB31AB672BDAE06A004F7913 /* XvMidi.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BB31AB652BDAE05C004F7913 /* XvMidi.framework */; };
+		BB31AB682BDAE06A004F7913 /* XvMidi.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = BB31AB652BDAE05C004F7913 /* XvMidi.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		BB31AB642BDAE05C004F7913 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BB31AB602BDAE05C004F7913 /* XvMidi.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = BBB1FE8B26CDB19100247C4F;
+			remoteInfo = XvMidi;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		BB31AB692BDAE06A004F7913 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				BB31AB682BDAE06A004F7913 /* XvMidi.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		BB1B36912BDD990200A72880 /* MidiSlots.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MidiSlots.swift; sourceTree = "<group>"; };
 		BB31AB422BD9B47F004F7913 /* Biofeedback-Orchestra-Listener.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Biofeedback-Orchestra-Listener.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB31AB452BD9B47F004F7913 /* Biofeedback_Orchestra_ListenerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Biofeedback_Orchestra_ListenerApp.swift; sourceTree = "<group>"; };
 		BB31AB472BD9B47F004F7913 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -25,9 +54,11 @@
 		BB31AB4C2BD9B481004F7913 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		BB31AB532BD9B671004F7913 /* MultipeerSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultipeerSessionManager.swift; sourceTree = "<group>"; };
 		BB31AB552BD9B8DC004F7913 /* EEGDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EEGDataManager.swift; sourceTree = "<group>"; };
-		BB31AB572BD9B909004F7913 /* MusicianPeer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicianPeer.swift; sourceTree = "<group>"; };
+		BB31AB572BD9B909004F7913 /* ConnectedDevice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectedDevice.swift; sourceTree = "<group>"; };
 		BB31AB592BD9B928004F7913 /* EEGDataView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EEGDataView.swift; sourceTree = "<group>"; };
 		BB31AB5B2BD9C1EF004F7913 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		BB31AB5E2BDAB424004F7913 /* BpmProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BpmProcessor.swift; sourceTree = "<group>"; };
+		BB31AB602BDAE05C004F7913 /* XvMidi.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = XvMidi.xcodeproj; path = ../../../../../../Frameworks/EXTERNAL_COMM/XvMidi/XvMidi.xcodeproj; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -35,6 +66,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BB31AB672BDAE06A004F7913 /* XvMidi.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -46,6 +78,7 @@
 			children = (
 				BB31AB442BD9B47F004F7913 /* Biofeedback-Orchestra-Listener */,
 				BB31AB432BD9B47F004F7913 /* Products */,
+				BB31AB662BDAE06A004F7913 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -60,14 +93,17 @@
 		BB31AB442BD9B47F004F7913 /* Biofeedback-Orchestra-Listener */ = {
 			isa = PBXGroup;
 			children = (
-				BB31AB5B2BD9C1EF004F7913 /* Info.plist */,
 				BB31AB452BD9B47F004F7913 /* Biofeedback_Orchestra_ListenerApp.swift */,
 				BB31AB472BD9B47F004F7913 /* ContentView.swift */,
 				BB31AB532BD9B671004F7913 /* MultipeerSessionManager.swift */,
+				BB1B36912BDD990200A72880 /* MidiSlots.swift */,
+				BB31AB572BD9B909004F7913 /* ConnectedDevice.swift */,
+				BB31AB5E2BDAB424004F7913 /* BpmProcessor.swift */,
 				BB31AB552BD9B8DC004F7913 /* EEGDataManager.swift */,
-				BB31AB572BD9B909004F7913 /* MusicianPeer.swift */,
 				BB31AB592BD9B928004F7913 /* EEGDataView.swift */,
+				BB31AB602BDAE05C004F7913 /* XvMidi.xcodeproj */,
 				BB31AB492BD9B481004F7913 /* Assets.xcassets */,
+				BB31AB5B2BD9C1EF004F7913 /* Info.plist */,
 				BB31AB4B2BD9B481004F7913 /* Preview Content */,
 			);
 			path = "Biofeedback-Orchestra-Listener";
@@ -81,6 +117,21 @@
 			path = "Preview Content";
 			sourceTree = "<group>";
 		};
+		BB31AB612BDAE05C004F7913 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				BB31AB652BDAE05C004F7913 /* XvMidi.framework */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		BB31AB662BDAE06A004F7913 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -91,6 +142,7 @@
 				BB31AB3E2BD9B47F004F7913 /* Sources */,
 				BB31AB3F2BD9B47F004F7913 /* Frameworks */,
 				BB31AB402BD9B47F004F7913 /* Resources */,
+				BB31AB692BDAE06A004F7913 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -127,12 +179,28 @@
 			mainGroup = BB31AB392BD9B47F004F7913;
 			productRefGroup = BB31AB432BD9B47F004F7913 /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = BB31AB612BDAE05C004F7913 /* Products */;
+					ProjectRef = BB31AB602BDAE05C004F7913 /* XvMidi.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				BB31AB412BD9B47F004F7913 /* Biofeedback-Orchestra-Listener */,
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		BB31AB652BDAE05C004F7913 /* XvMidi.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = XvMidi.framework;
+			remoteRef = BB31AB642BDAE05C004F7913 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
 		BB31AB402BD9B47F004F7913 /* Resources */ = {
@@ -151,9 +219,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BB31AB5F2BDAB424004F7913 /* BpmProcessor.swift in Sources */,
 				BB31AB482BD9B47F004F7913 /* ContentView.swift in Sources */,
+				BB1B36922BDD990200A72880 /* MidiSlots.swift in Sources */,
 				BB31AB562BD9B8DC004F7913 /* EEGDataManager.swift in Sources */,
-				BB31AB582BD9B909004F7913 /* MusicianPeer.swift in Sources */,
+				BB31AB582BD9B909004F7913 /* ConnectedDevice.swift in Sources */,
 				BB31AB462BD9B47F004F7913 /* Biofeedback_Orchestra_ListenerApp.swift in Sources */,
 				BB31AB5A2BD9B928004F7913 /* EEGDataView.swift in Sources */,
 				BB31AB542BD9B671004F7913 /* MultipeerSessionManager.swift in Sources */,
