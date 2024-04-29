@@ -28,7 +28,7 @@ struct MIDISlotView: View {
             }
         }
         .padding() // Add some padding for better spacing
-        .frame(width: 175, height: 75) // Specify frame size
+        .frame(width: 200, height: 75) // Specify frame size
         .overlay(
             RoundedRectangle(cornerRadius: 10)
                 .stroke(Color.white, lineWidth: 1) // Border for the slot
