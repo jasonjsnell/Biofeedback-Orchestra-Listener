@@ -5,20 +5,44 @@
 //  Created by Jason Snell on 4/25/24.
 //
 
-import Foundation
-import Combine
-
-protocol BpmProcessorDelegate: AnyObject {
-    func didDetect(newBpm: Int)
-}
+import UIKit
+import XvAbletonLink
+import XvTimer
 
 class BpmProcessor:ObservableObject {
     
-    weak var delegate: BpmProcessorDelegate?
+    private var link:XvAbletonLink
+    private var timer:XvTimer
     
     private var bpmValues: [Int] = []
     @Published var averageBpm: Int = 0
 
+    init(){
+        timer = XvTimer.sharedInstance
+        link = XvAbletonLink.sharedInstance
+        
+        print("init BPM with timer")
+        timer.initTimer(withAppID: "Biofeedback-Orchestra")
+        timer.audioClockOn = true
+        timer.delegate = self
+        print("timer", timer)
+        
+        link.setup(bpm: 60, quantum: 16.0)
+        link.set(active: true)
+        link.start()
+    }
+    
+    func getABLinkViewController() -> UIViewController? {
+        
+        if let vc:UIViewController = link.getViewController() {
+            print("Retriving ABLink VC from Link framework", vc)
+            vc.view.backgroundColor = UIColor.white
+            return vc
+        } else {
+            print("Error: Invalid view controler from ABLLink")
+            return nil
+        }
+    }
     
     func add(bpm:Int){
         // Add the new BPM to the array
@@ -31,7 +55,6 @@ class BpmProcessor:ObservableObject {
         
         // Recalculate the average
         updateAverage()
-        
     }
     
     private func updateAverage() {
@@ -44,12 +67,21 @@ class BpmProcessor:ObservableObject {
             if (newAverage != averageBpm) {
                 print("Updated Average BPM: \(averageBpm)")
                 
-                //update var
+                //update var for GUI
                 averageBpm = newAverage
                 
-                //send to delegate
-                self.delegate?.didDetect(newBpm: newAverage)
+                //send new BPM to Ableton and other peers
+                link.bpm = Float64(newAverage)
             }
         }
     }
+}
+
+extension BpmProcessor: XvTimerDelegate {
+    func audioClockTick() {
+        link.audioClock()
+    }
+    
+    func guiTimerTick() {}
+
 }

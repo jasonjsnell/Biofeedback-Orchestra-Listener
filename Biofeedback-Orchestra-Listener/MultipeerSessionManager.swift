@@ -12,13 +12,15 @@ class MultipeerSessionManager: NSObject, ObservableObject {
     private var session: MCSession
     private var advertiser: MCNearbyServiceAdvertiser
     private var midi:XvMidi
+    private let MIDI_ALPHA_CC:UInt8 = 20
+    
     
     //connected devices
     @Published var connectedDevices: [ConnectedDevice] = []
     @Published var midiSlots: [MIDISlot] = Array(
         repeating: MIDISlot(
             id: 0,
-            peerID: nil
+            device: nil
         ),
         count: 10
     )
@@ -49,12 +51,11 @@ class MultipeerSessionManager: NSObject, ObservableObject {
         super.init()
         
         // Initialize the slots with unique IDs
-        for index in midiSlots.indices {
+        for index in 0..<midiSlots.count {
             midiSlots[index].id = index + 1
         }
         
         //delegates
-        bpmProcessor.delegate = self
         self.session.delegate = self
         self.advertiser.delegate = self
         
@@ -88,12 +89,13 @@ extension MultipeerSessionManager: MCSessionDelegate {
         }
     }
 
+    //MARK: data coming in from iphones via airdrop
     func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {
         do {
             if let dataDict = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
                let type = dataDict["type"] as? String {
                 
-                calculatePacketsPerSecond()
+                //calculatePacketsPerSecond()
                 
                 DispatchQueue.main.async { [weak self] in
                     guard let self = self else { return }
@@ -126,12 +128,13 @@ extension MultipeerSessionManager: MCSessionDelegate {
         }
     }
     
+    //MARK: - add / remove devices
     private func addDevice(peerID: MCPeerID) {
         let newDevice = ConnectedDevice(peerID: peerID, position: findAvailableSlot())
-        
+
         if let slotIndex = midiSlots.firstIndex(where: { $0.id == newDevice.position }) {
             DispatchQueue.main.async {
-                self.midiSlots[slotIndex].peerID = peerID
+                self.midiSlots[slotIndex].device = newDevice
             }
         }
         newDevice.delegate = self
@@ -144,30 +147,31 @@ extension MultipeerSessionManager: MCSessionDelegate {
             connectedDevices.remove(at: deviceIndex)
         }
 
-        // Find the corresponding slot and nil out the peerID
-        if let slotIndex = midiSlots.firstIndex(where: { $0.peerID == peerID }) {
+        // Find the corresponding slot and nil out the device
+        if let slotIndex = midiSlots.firstIndex(where: { $0.device?.peerID == peerID }) {
             DispatchQueue.main.async {
-                self.midiSlots[slotIndex].peerID = nil
+                self.midiSlots[slotIndex].device = nil
             }
         }
     }
     
 
-    func findAvailableSlot() -> Int {
-        // Find the next available slot or return a default value
-        midiSlots.first(where: { $0.peerID == nil })?.id ?? 1
+    private func findAvailableSlot() -> Int {
+        // Find the first slot that does not contain a device and return its ID
+        return midiSlots.first(where: { $0.device == nil })?.id ?? 1
     }
     
     private func processData(type: String, dataDict: [String: Any], connectedDevice: ConnectedDevice) {
         // This function is used to process "eeg" and "heart" messages for an existing connected device
         switch type {
         case "eeg":
-            if let brainwaves = dataDict["brainwaves"] as? [Int] {
+           
+            if let alpha:Int = dataDict["alpha"] as? Int {
                 // Process EEG data for the specific ConnectedDevice object
-                connectedDevice.process(brainwaves: brainwaves)
+                connectedDevice.process(alpha: alpha)
             }
         case "heart":
-            if let bpm = dataDict["bpm"] as? Int, let hrv = dataDict["hrv"] as? Int {
+            if let bpm:Int = dataDict["bpm"] as? Int, let hrv:Int = dataDict["hrv"] as? Int {
                 // Pass bpm to processor to detect group average
                 bpmProcessor.add(bpm: bpm)
             }
@@ -209,20 +213,19 @@ extension MultipeerSessionManager: MCSessionDelegate {
 
 //MARK: - Send to MIDI
 
-extension MultipeerSessionManager: BpmProcessorDelegate {
-    func didDetect(newBpm: Int) {
-        // Handle new BPM detected. For example, send it via MIDI.
-        print("send new BPM to MIDI")
-        //midi.sendBpm(newBpm)
-    }
-}
-
 extension MultipeerSessionManager: ConnectedDeviceDelegate {
-    func didDetect(newAlphaNote: Int, forDevice deviceID: String) {
-        // Handle new alpha note detected. For example, send it via MIDI.
+    
+    
+    func didDetect(newAlphaNote: UInt8, forChannel: UInt8) {
         print("send new alpha note to MIDI")
-        //midi.sendAlphaNote(newAlphaNote, forDevice: deviceID)
+        
     }
+    
+    func didReceive(newAlphaCCValue: UInt8, forChannel: UInt8) {
+        midi.controlChange(channel: forChannel, controller: MIDI_ALPHA_CC, value: newAlphaCCValue)
+    }
+    
+    
 }
 
 // MARK: - Accept auto invitations

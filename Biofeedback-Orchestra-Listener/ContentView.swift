@@ -4,13 +4,20 @@
 //  Created by Jason Snell on 4/24/24.
 
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct ContentView: View {
     @StateObject var multipeerSessionManager = MultipeerSessionManager()
     
     // Define the layout for the grid
-    let gridItems = Array(repeating: GridItem(.flexible(), spacing: 10), count: 2)
+    let gridItems = [GridItem(.flexible()), GridItem(.flexible())]
+
+    
+    //vars to track the ABLink view controller
+    @State private var showAbletonLinkView = false
+    @StateObject private var ablinkVCW = ABLinkViewControllerWrapper()
         
+       
     
     @State private var averageBpm: Int = 0
         
@@ -22,33 +29,49 @@ struct ContentView: View {
             
             Text("Connected Musicians:")
             
-            
             LazyVGrid(columns: gridItems, spacing: 10) {
-                ForEach(multipeerSessionManager.midiSlots) { slot in
-                    MIDISlotView(slot: slot)
-                        .frame(width: 150, height: 75)
+                ForEach($multipeerSessionManager.midiSlots) { $slot in
+                    MIDISlotView(slot: $slot)
+                        .frame(width: 175, height: 75)
                         .overlay(
                             RoundedRectangle(cornerRadius: 10)
-                                .stroke(slot.peerID != nil ? Color.white : Color.white.opacity(0.4), style: StrokeStyle(lineWidth: 1, dash: slot.peerID != nil ? [] : [5]))
+                                .stroke(slot.device != nil ? Color.white : Color.white.opacity(0.4), style: StrokeStyle(lineWidth: 1, dash: slot.device != nil ? [] : [5]))
                         )
                         .onDrag {
-                            // Provide the data to be dragged
-                            return NSItemProvider(object: String(slot.id) as NSString)
+                            NSItemProvider(object: String(slot.id) as NSString)
                         }
-                        .onDrop(of: [.text], delegate: MIDISlotDropDelegate(targetSlot: slot, midiSlots: $multipeerSessionManager.midiSlots))
+                        .onDrop(of: [.text], delegate: MIDISlotDropDelegate(targetSlot: $slot.wrappedValue, midiSlots: $multipeerSessionManager.midiSlots))
                 }
             }
+
+
             
             Spacer()
             
             // Display the average BPM
-            Text("Average BPM: \(averageBpm)")
-                .padding()
+            
+            Button(action: {
+                // Create and present the Ableton Link view controller
+                if let vc = multipeerSessionManager.bpmProcessor.getABLinkViewController() {
+                    ablinkVCW.viewController = vc
+                    showAbletonLinkView = true
+                }
+            }) {
+                Text("Average BPM: \(averageBpm)")
+            }
+            .sheet(isPresented: $showAbletonLinkView) {
+                if let vc = ablinkVCW.viewController {
+                    ABLinkViewController(viewController: vc)
+                }
+            }
+            
+            .padding()
         }
         .onReceive(multipeerSessionManager.bpmProcessor.$averageBpm) { newValue in
             averageBpm = newValue
         }
     }
+    
 }
 
 
