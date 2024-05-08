@@ -7,10 +7,11 @@
 
 import Foundation
 import MultipeerConnectivity
-import XvMidi
+//import XvMidi
 
 protocol ConnectedDeviceDelegate: AnyObject {
-    func didDetect(newAlphaNote: UInt8, forChannel: UInt8)
+    func didreceive(newAlphaNoteOn: UInt8, atVelocity:UInt8, forChannel: UInt8)
+    func didreceive(newAlphaNoteOff: UInt8, forChannel: UInt8)
     func didReceive(newAlphaCCValue:UInt8, forChannel: UInt8)
 }
 
@@ -26,7 +27,7 @@ class ConnectedDevice:Identifiable {
         print("New device", position, peerID.displayName)
         self.position = position
         self.peerID = peerID
-        midiTimer = Timer.scheduledTimer(timeInterval: 1/15, target: self, selector: #selector(renderMIDI), userInfo: nil, repeats: true)
+        midiTimer = Timer.scheduledTimer(timeInterval: 1/15, target: self, selector: #selector(renderMIDICC), userInfo: nil, repeats: true)
     }
     
     func update(position: Int) {
@@ -37,21 +38,52 @@ class ConnectedDevice:Identifiable {
     
     //MARK: - EEG alpha
     var targetAlpha:Int = 0
-    func process(alpha:Int) {
-        
-        //roughly multiply alpha in a midi range (0-127)
-        let newAlphaForMIDI:Int = alpha * 15
+    func process(alphaCC:Int) {
         
         //if it's a new value, then record it
-        if (newAlphaForMIDI != targetAlpha) {
-            targetAlpha = newAlphaForMIDI
+        if (alphaCC != targetAlpha) {
+            targetAlpha = alphaCC
         }
+    }
+    
+    func canConvertToInt8(value: Int) -> Bool {
+        return value >= 0 && value < 128
+    }
+    
+    func processAlphaNote(on:Bool, note:Int, velocity: Int){
+        
+        if !canConvertToInt8(value: note) {
+            print("Note", note, "is not within UInt8 range")
+            return
+        }
+        if !canConvertToInt8(value: velocity) {
+            print("Velocity", note, "is not within UInt8 range")
+            return
+        }
+        
+        if (on){
+        print("Note ON | Ch:", position-1, "Velo:", velocity)
+            //note on
+            delegate?.didreceive(
+                newAlphaNoteOn: UInt8(note),
+                atVelocity: UInt8(velocity),
+                forChannel: UInt8(position-1)
+            )
+        } else if (!on) {
+            print("Note OFF | Ch:", position-1)
+            //note off
+            delegate?.didreceive(
+                newAlphaNoteOff: UInt8(note),
+                forChannel: UInt8(position-1)
+            )
+        }
+        
     }
     
     //MARK: - MIDI
     var midiAlpha:Int = 0
     var midiInc:Int = 1
-    @objc func renderMIDI() {
+    @objc func renderMIDICC() {
      
         var newMidi:Bool = false
         

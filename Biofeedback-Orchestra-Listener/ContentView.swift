@@ -30,7 +30,7 @@ struct ContentView: View {
             
             HStack(spacing: 20) {
                 VStack(spacing: 20) {
-                    ForEach(0..<5, id: \.self) { index in
+                    ForEach(0..<4, id: \.self) { index in
                         let slot = multipeerSessionManager.midiSlots[index]
                         MIDISlotView(slot: $multipeerSessionManager.midiSlots[index])
                             .frame(width: 200, height: 75)
@@ -38,6 +38,10 @@ struct ContentView: View {
                                 RoundedRectangle(cornerRadius: 10)
                                     .stroke(slot.device != nil ? Color.white : Color.white.opacity(0.4), style: StrokeStyle(lineWidth: 1, dash: slot.device != nil ? [] : [5]))
                             )
+                            .onTapGesture {
+                                //send midi pulse for midi mapping
+                                multipeerSessionManager.sendAlphaMidiPulse(toChannel: index)
+                            }
                             .onDrag {
                                 NSItemProvider(object: String(slot.id) as NSString)
                             }
@@ -46,7 +50,7 @@ struct ContentView: View {
                 }
                 
                 VStack(spacing: 20) {
-                    ForEach(5..<10, id: \.self) { index in
+                    ForEach(4..<8, id: \.self) { index in
                         let slot = multipeerSessionManager.midiSlots[index]
                         MIDISlotView(slot: $multipeerSessionManager.midiSlots[index])
                             .frame(width: 200, height: 75)
@@ -54,6 +58,30 @@ struct ContentView: View {
                                 RoundedRectangle(cornerRadius: 10)
                                     .stroke(slot.device != nil ? Color.white : Color.white.opacity(0.4), style: StrokeStyle(lineWidth: 1, dash: slot.device != nil ? [] : [5]))
                             )
+                            .onTapGesture {
+                                //send midi pulse for midi mapping
+                                multipeerSessionManager.sendAlphaMidiPulse(toChannel: index)
+                            }
+                            .onDrag {
+                                NSItemProvider(object: String(slot.id) as NSString)
+                            }
+                            .onDrop(of: [.text], delegate: MIDISlotDropDelegate(targetSlot: $multipeerSessionManager.midiSlots[index].wrappedValue, midiSlots: $multipeerSessionManager.midiSlots))
+                    }
+                }
+                
+                VStack(spacing: 20) {
+                    ForEach(8..<10, id: \.self) { index in
+                        let slot = multipeerSessionManager.midiSlots[index]
+                        MIDISlotView(slot: $multipeerSessionManager.midiSlots[index])
+                            .frame(width: 200, height: 75)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(slot.device != nil ? Color.white : Color.white.opacity(0.4), style: StrokeStyle(lineWidth: 1, dash: slot.device != nil ? [] : [5]))
+                            )
+                            .onTapGesture {
+                                //send midi pulse for midi mapping
+                                multipeerSessionManager.sendAlphaMidiPulse(toChannel: index)
+                            }
                             .onDrag {
                                 NSItemProvider(object: String(slot.id) as NSString)
                             }
@@ -73,6 +101,7 @@ struct ContentView: View {
                 }
             }) {
                 Text("Average BPM: \(averageBpm)")
+                    .foregroundColor(.white)
             }
             .sheet(isPresented: $showAbletonLinkView) {
                 if let vc = ablinkVCW.viewController {
