@@ -22,6 +22,7 @@
 		BB31AB5F2BDAB424004F7913 /* BpmProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB31AB5E2BDAB424004F7913 /* BpmProcessor.swift */; };
 		BB31AB672BDAE06A004F7913 /* XvMidi.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BB31AB652BDAE05C004F7913 /* XvMidi.framework */; };
 		BB31AB682BDAE06A004F7913 /* XvMidi.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = BB31AB652BDAE05C004F7913 /* XvMidi.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		BB6A0DA02BEF199B006369C1 /* DmxLightModelCOZ.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB6A0D9F2BEF199B006369C1 /* DmxLightModelCOZ.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -79,6 +80,7 @@
 		BB31AB5B2BD9C1EF004F7913 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		BB31AB5E2BDAB424004F7913 /* BpmProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BpmProcessor.swift; sourceTree = "<group>"; };
 		BB31AB602BDAE05C004F7913 /* XvMidi.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = XvMidi.xcodeproj; path = ../../../../../../Frameworks/EXTERNAL_COMM/XvMidi/XvMidi.xcodeproj; sourceTree = "<group>"; };
+		BB6A0D9F2BEF199B006369C1 /* DmxLightModelCOZ.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DmxLightModelCOZ.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -138,6 +140,7 @@
 				BB1B36912BDD990200A72880 /* MidiSlots.swift */,
 				BB31AB5E2BDAB424004F7913 /* BpmProcessor.swift */,
 				BB1B36AF2BDDCAAD00A72880 /* ABLinkViewController.swift */,
+				BB6A0D9F2BEF199B006369C1 /* DmxLightModelCOZ.swift */,
 				BB31AB602BDAE05C004F7913 /* XvMidi.xcodeproj */,
 				BB1B36B12BDDE35900A72880 /* XvTimer.xcodeproj */,
 				BB1B36962BDDC5EE00A72880 /* XvAbletonLink.xcodeproj */,
@@ -282,6 +285,7 @@
 			files = (
 				BB31AB5F2BDAB424004F7913 /* BpmProcessor.swift in Sources */,
 				BB31AB482BD9B47F004F7913 /* ContentView.swift in Sources */,
+				BB6A0DA02BEF199B006369C1 /* DmxLightModelCOZ.swift in Sources */,
 				BB1B36922BDD990200A72880 /* MidiSlots.swift in Sources */,
 				BB1B36B02BDDCAAD00A72880 /* ABLinkViewController.swift in Sources */,
 				BB31AB582BD9B909004F7913 /* ConnectedDevice.swift in Sources */,

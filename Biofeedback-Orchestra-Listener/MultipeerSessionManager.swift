@@ -15,6 +15,21 @@ class MultipeerSessionManager: NSObject, ObservableObject, MCSessionDelegate, MC
     private var midi:XvMidi
     private let MIDI_ALPHA_CC:UInt8 = 20
     
+    //DMX
+    let dmxLights:[DmxLightModelCOZ] = [
+        
+        //0 is brightess, 1 2 3 color, 4 5 6 fixed settings
+        DmxLightModelCOZ(startingAddress: 1),
+        DmxLightModelCOZ(startingAddress: 5),
+        DmxLightModelCOZ(startingAddress: 9),
+        DmxLightModelCOZ(startingAddress: 13),
+        DmxLightModelCOZ(startingAddress: 17),
+        DmxLightModelCOZ(startingAddress: 21),
+        DmxLightModelCOZ(startingAddress: 25),
+        DmxLightModelCOZ(startingAddress: 29),
+        DmxLightModelCOZ(startingAddress: 33),
+        DmxLightModelCOZ(startingAddress: 37),
+    ]
     
     //connected devices
     @Published var connectedDevices: [ConnectedDevice] = []
@@ -55,6 +70,7 @@ class MultipeerSessionManager: NSObject, ObservableObject, MCSessionDelegate, MC
         // Initialize the slots with unique IDs
         for index in 0..<midiSlots.count { midiSlots[index].id = index + 1 }
         
+        startBpmTimer(bpm: currentBPM)
     }
     
     // MARK: - Advertiser Delegate
@@ -125,7 +141,7 @@ class MultipeerSessionManager: NSObject, ObservableObject, MCSessionDelegate, MC
     func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {
         do {
             
-            print("RX from", peerID.displayName)
+            //print("RX from", peerID.displayName)
             if let dataDict = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
                let type = dataDict["type"] as? String {
                 
@@ -165,13 +181,13 @@ class MultipeerSessionManager: NSObject, ObservableObject, MCSessionDelegate, MC
         // This function is used to process "eeg" and "heart" messages for an existing connected device
         switch type {
         case "alphaCC":
-           
+         
             if let alphaCC:Int = dataDict["value"] as? Int {
                 // Process EEG data for the specific ConnectedDevice object
                 connectedDevice.process(alphaCC: alphaCC)
             }
         case "alphaNote":
-           
+         
             if let on:Bool = dataDict["on"] as? Bool,
                let note:Int = dataDict["note"] as? Int,
                let velocity:Int = dataDict["velocity"] as? Int {
@@ -180,10 +196,13 @@ class MultipeerSessionManager: NSObject, ObservableObject, MCSessionDelegate, MC
                 connectedDevice.processAlphaNote(on: on, note:note, velocity: velocity)
             }
         case "heart":
-            if let bpm:Int = dataDict["bpm"] as? Int, 
+            
+            if let bpm:Int = dataDict["bpm"] as? Int,
                 let hrv:Int = dataDict["hrv"] as? Int {
                 // Pass bpm to processor to detect group average
-                bpmProcessor.add(bpm: bpm)
+                if let newBpm:Int = bpmProcessor.add(bpm: bpm) {
+                    update(bpm: newBpm)
+                }
             }
         default:
             print("Data type \(type) received for device \(connectedDevice.peerID)")
@@ -220,10 +239,34 @@ class MultipeerSessionManager: NSObject, ObservableObject, MCSessionDelegate, MC
     func session(_ session: MCSession, didFinishReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, at localURL: URL?, withError error: Error?) {
     }
     
-    //MIDI mapping
+    //MARK: MIDI mapping
     func sendAlphaMidiPulse(toChannel:Int) {
         let randomValue: UInt8 = UInt8.random(in: 0...UInt8.max)
         midi.controlChange(channel: UInt8(toChannel), controller: MIDI_ALPHA_CC, value: randomValue)
+    }
+    
+    //MARK: BPM
+    //pulse to light
+    private var dmxAlphaCC:UInt8 = 0
+    private var bpmPulse:Double = 1.0
+    private var BPM_INC:Double = 0.0025
+    private let dmxAlphaCCFloorMin:UInt8 = 0
+    
+    var bpmTimer: Timer?
+    var currentBPM: Int = 60 // Default BPM
+    
+    func startBpmTimer(bpm: Int) {
+        let interval = 60.0 / Double(bpm) // Convert BPM to interval in seconds
+        //bpmTimer = Timer.scheduledTimer(timeInterval: interval, target: self, selector: #selector(bpmTimerFire), userInfo: nil, repeats: true)
+    }
+    @objc func bpmTimerFire() {
+        //bring pulse back up
+        bpmPulse = 1.0
+    }
+    func update(bpm:Int){
+        currentBPM = bpm
+        bpmTimer?.invalidate() // Stop the current timer
+        startBpmTimer(bpm: bpm) // Start a new timer with the new BPM
     }
 }
 
@@ -241,6 +284,35 @@ extension MultipeerSessionManager: ConnectedDeviceDelegate {
     }
     
     func didReceive(newAlphaCCValue: UInt8, forChannel: UInt8) {
+        
+        dmxAlphaCC = newAlphaCCValue
         midi.controlChange(channel: forChannel, controller: MIDI_ALPHA_CC, value: newAlphaCCValue)
+    }
+    func renderDmx(forChannel:UInt8) {
+        
+         bpmPulse -= BPM_INC
+         if (bpmPulse < 0.0) {
+             bpmPulse = 0.0
+         }
+         //print("BPM", bpmPulse)
+         
+        var dmxAlphaCCFloor = dmxAlphaCC
+        if (dmxAlphaCCFloor < dmxAlphaCCFloorMin) { dmxAlphaCCFloor = dmxAlphaCCFloorMin }
+        
+        //DMX
+        let light:DmxLightModelCOZ = dmxLights[Int(forChannel)]
+        
+//        let red:UInt8 = UInt8(Double(dmxAlphaCCFloor) * 0.05 * bpmPulse)
+//        let green:UInt8 = UInt8(Double(dmxAlphaCCFloor) * 0.3 * bpmPulse)
+//        let blue:UInt8 = UInt8(Double(dmxAlphaCCFloor) * 1.0 * bpmPulse)
+        let red:UInt8 = UInt8(Double(dmxAlphaCCFloor) * 0.05)
+        let green:UInt8 = UInt8(Double(dmxAlphaCCFloor) * 0.3)
+        let blue:UInt8 = UInt8(Double(dmxAlphaCCFloor) * 1.0)
+        
+        light.set(
+            r: red,
+            g: green,
+            b: blue
+        )
     }
 }

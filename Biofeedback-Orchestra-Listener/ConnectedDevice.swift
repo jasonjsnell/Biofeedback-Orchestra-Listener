@@ -7,12 +7,12 @@
 
 import Foundation
 import MultipeerConnectivity
-//import XvMidi
 
 protocol ConnectedDeviceDelegate: AnyObject {
     func didreceive(newAlphaNoteOn: UInt8, atVelocity:UInt8, forChannel: UInt8)
     func didreceive(newAlphaNoteOff: UInt8, forChannel: UInt8)
     func didReceive(newAlphaCCValue:UInt8, forChannel: UInt8)
+    func renderDmx(forChannel: UInt8)
 }
 
 class ConnectedDevice:Identifiable {
@@ -21,6 +21,7 @@ class ConnectedDevice:Identifiable {
     var peerID: MCPeerID
     var position:Int
     var midiTimer:Timer?
+    
     
     init(peerID:MCPeerID, position:Int) {
         
@@ -39,7 +40,6 @@ class ConnectedDevice:Identifiable {
     //MARK: - EEG alpha
     var targetAlpha:Int = 0
     func process(alphaCC:Int) {
-        
         //if it's a new value, then record it
         if (alphaCC != targetAlpha) {
             targetAlpha = alphaCC
@@ -62,7 +62,7 @@ class ConnectedDevice:Identifiable {
         }
         
         if (on){
-        print("Note ON | Ch:", position-1, "Velo:", velocity)
+        //print("Note ON | Ch:", position-1, "Velo:", velocity)
             //note on
             delegate?.didreceive(
                 newAlphaNoteOn: UInt8(note),
@@ -70,7 +70,7 @@ class ConnectedDevice:Identifiable {
                 forChannel: UInt8(position-1)
             )
         } else if (!on) {
-            print("Note OFF | Ch:", position-1)
+            //print("Note OFF | Ch:", position-1)
             //note off
             delegate?.didreceive(
                 newAlphaNoteOff: UInt8(note),
@@ -83,8 +83,9 @@ class ConnectedDevice:Identifiable {
     //MARK: - MIDI
     var midiAlpha:Int = 0
     var midiInc:Int = 1
+    
     @objc func renderMIDICC() {
-     
+       
         var newMidi:Bool = false
         
         if targetAlpha > midiAlpha + midiInc {
@@ -101,5 +102,6 @@ class ConnectedDevice:Identifiable {
             if midiAlpha > 127 { midiAlpha = 127 } else if midiAlpha < 0 { midiAlpha = 0 }
             delegate?.didReceive(newAlphaCCValue: UInt8(midiAlpha), forChannel: UInt8(position-1))
         }
+        delegate?.renderDmx(forChannel: UInt8(position-1))
     }
 }

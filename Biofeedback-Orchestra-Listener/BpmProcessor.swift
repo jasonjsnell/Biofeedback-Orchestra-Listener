@@ -44,7 +44,7 @@ class BpmProcessor:ObservableObject {
         }
     }
     
-    func add(bpm:Int){
+    func add(bpm:Int) -> Int?{
         // Add the new BPM to the array
         bpmValues.append(bpm)
         
@@ -54,14 +54,16 @@ class BpmProcessor:ObservableObject {
         }
         
         // Recalculate the average
-        updateAverage()
+        return updateAverage()
     }
     
-    private func updateAverage() {
+    private func updateAverage() -> Int? {
         let sum = bpmValues.reduce(0, +)
+        
+        let newAverage = Int(Double(sum) / Double(bpmValues.count))
+        var newValue:Bool = false
+        
         DispatchQueue.main.async { [self] in
-            
-            let newAverage = Int(Double(sum) / Double(bpmValues.count))
             
             //only publish new results
             if (newAverage != averageBpm) {
@@ -72,8 +74,17 @@ class BpmProcessor:ObservableObject {
                 
                 //send new BPM to Ableton and other peers
                 link.bpm = Float64(newAverage)
+                
+                newValue = true
             }
         }
+        
+        if (newValue) {
+            return newAverage
+        } else {
+            return nil
+        }
+       
     }
 }
 
