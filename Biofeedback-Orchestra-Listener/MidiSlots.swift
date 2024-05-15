@@ -21,10 +21,11 @@ struct MIDISlotView: View {
         VStack {
             if let device = slot.device {
                 Text(device.peerID.displayName) // Display the device's name
-                    .font(.system(size: 13)) // Smaller font size
+                    .font(.system(size: 18)) // Smaller font size
                     .multilineTextAlignment(.center) // Center text
             } else {
                 Text("MIDI Ch \(slot.id)") // Display MIDI channel if no device
+                    .font(.system(size: 18))
             }
         }
         .padding() // Add some padding for better spacing

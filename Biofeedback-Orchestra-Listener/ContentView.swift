@@ -26,7 +26,9 @@ struct ContentView: View {
                 .padding(.bottom, 25)
             
             Text("Connected Musicians:")
+                .font(.system(size: 18))
                 .padding(.bottom)
+            
             
             HStack(spacing: 20) {
                 VStack(spacing: 20) {
@@ -101,6 +103,7 @@ struct ContentView: View {
                 }
             }) {
                 Text("Average BPM: \(averageBpm)")
+                    .font(.system(size: 18))
                     .foregroundColor(.white)
             }
             .sheet(isPresented: $showAbletonLinkView) {
